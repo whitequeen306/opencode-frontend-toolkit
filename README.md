@@ -82,6 +82,8 @@ No extra install — it reuses Playwright (provided by the `webapp-testing` prer
 
 **Fidelity:** sampling infers a token system from a few elements — good for "复刻大概感觉", not pixel-perfect brand cloning. For higher fidelity, optionally install a dedicated extractor skill (e.g. `shaom/brand-to-design-md-skill`) — not bundled by default.
 
+**Effects (motion) are never cloned** — only static style is. Stage 3 designs motion thematically around the project's subject (cool serves content, not itself — no skiing effect on a photography site), built with gsap.
+
 ## How it was validated
 
 RED-GREEN tested per the `writing-skills` methodology:

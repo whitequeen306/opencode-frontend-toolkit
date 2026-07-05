@@ -66,11 +66,13 @@ Hand frontend-design the `DESIGN.md` path **and** the exported theme. Instruct i
 
 Load the gsap variant from Stage 0. Add animation. Lenis is **default-on site-wide**.
 
+- **Thematic motion (design rule):** every effect must tie to the project's subject — the motion metaphor derives from the domain (photography → shutter / aperture / film grain / exposure; finance → counting / data ticks / precision; outdoor / sports → parallax / momentum; music → waveform / beat). Cool serves content, not itself — reject flashy-but-irrelevant effects (no skiing effect on a photography site). State the metaphor you chose and why before implementing.
+- **Lean gsap for the cool stuff:** GSAP for timelines / choreography / scroll-linked / FLIP / SVG morph; CSS-only for simple hovers/transitions. Don't escalate to GSAP where CSS suffices (perf, per **gsap-performance**).
 - Wire Lenis ↔ ScrollTrigger: `lenis.on('scroll', ScrollTrigger.update)`; drive `lenis.raf` from `gsap.ticker` + `ScrollTrigger.update`. (Full detail in **gsap-scrolltrigger**; just ensure this wiring exists.)
-- CSS-only for simple hovers/transitions; GSAP for timelines / choreography / scroll-linked. Don't escalate to GSAP where CSS suffices (perf).
 - **Reduced-motion (mandatory):** wrap all motion in `gsap.matchMedia({ '(prefers-reduced-motion: no-preference)': … })`; under reduced-motion, disable Lenis smoothing (`smoothWheel: false` or skip init) and skip non-essential animations. See **gsap-performance**.
 
 **Verify gate:**
+- Thematic fit: every effect has a stated justification tying it to the project's subject; no flashy-but-irrelevant effects shipped.
 - Animate only `transform` / `opacity` (no layout-thrash props) — gsap-performance rule.
 - 60fps target on hero/landing scroll.
 - Emulate `prefers-reduced-motion: reduce` → Lenis off, animations skipped, no layout shift.
