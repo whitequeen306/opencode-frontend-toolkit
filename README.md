@@ -1,146 +1,146 @@
-# opencode-frontend-toolkit
+# frontend-playbook
 
-Opencode skills for the end-to-end frontend build pipeline — **design.md baseline → frontend-design → gsap+Lenis → performance → Playwright verify**. Stack-agnostic (React / Vue / Svelte / vanilla). Lenis smooth scroll default-on, gated behind `prefers-reduced-motion`.
+面向 AI agent 的前端全流程 skill 包——**design.md 定基调 → frontend-design 出 UI → gsap+Lenis 做动效 → 性能审计 → Playwright 验证**。栈无关（React / Vue / Svelte / 原生），Lenis 平滑滚动默认全站开启，强制 `prefers-reduced-motion` 门控。
 
-## What's in the box
+## 里面有什么
 
-| Skill | Role |
+| Skill | 角色 |
 |---|---|
-| `frontend-playbook` | Conductor. Defines stage order, per-stack decisions, handoff contracts, and a verification gate at each stage. The only thing an agent loads to run the whole pipeline. |
-| `design-md` | Community skill for Google's DESIGN.md format (no official skill exists). Author / lint / export a portable design-token source-of-truth at the project root. |
+| `frontend-playbook` | 指挥。定义阶段顺序、按栈决策、阶段间交接契约、每阶段一个验证 gate。agent 只需加载它就能跑完整流水线。 |
+| `design-md` | Google DESIGN.md 格式的社区 skill（官方没出 skill）。在项目根写一份可移植的设计 token 源文件，lint + 导出。 |
 
-Both are discovered on demand by opencode's `**/SKILL.md` scanner.
+两个 skill 都被 agent 的 `**/SKILL.md` 扫描器按需发现。
 
-## The pipeline
+## 流水线
 
 ```
-DESIGN.md (tokens + rationale)
+DESIGN.md (token + rationale)
    │ designmd lint + export
    ├─► tailwind theme / CSS @theme / DTCG
    ▼
-frontend-design ─► gsap + Lenis ─► performance ─► webapp-testing
-   (build UI)        (motion)        (audit)        (verify)
+frontend-design ─► gsap + Lenis ─► 性能 ─► webapp-testing
+   (出 UI)          (动效)        (审计)     (验证)
 ```
 
-Each stage carries a concrete verify gate (e.g. `designmd lint` exit 0, computed styles == tokens, 60fps, zero console errors). Full detail in [`frontend-playbook/SKILL.md`](frontend-playbook/SKILL.md).
+每个阶段都有具体验证 gate（如 `designmd lint` exit 0、computed 样式 == token、60fps、零 console error）。完整细节见 [`frontend-playbook/SKILL.md`](frontend-playbook/SKILL.md)。
 
-## Prerequisites
+## 前置依赖
 
-The playbook names these skills at each stage; install them so the conductor can hand off.
+playbook 在各阶段点名这些 skill；装好它们，指挥才能交接。
 
-| Skill | Required? | Source |
+| Skill | 必需？ | 来源 |
 |---|---|---|
-| `frontend-design` | yes | `anthropics/skills` repo (skill at `skills/frontend-design`) |
-| `webapp-testing` | yes | `anthropics/skills` repo (skill at `skills/webapp-testing`) — **a separate skill**, just published in the same repo |
-| `gsap-core` / `-react` / `-frameworks` / `-scrolltrigger` / `-performance` | yes (agent picks variant by stack) | `greensock/gsap-skills` repo |
-| `performance-optimization` | optional | cortexloop distribution; not auto-installed. Stage 4 degrades to Playwright-based metrics (CLS / LCP / long-tasks) if absent. |
+| `frontend-design` | 是 | `anthropics/skills` 仓库（skill 在 `skills/frontend-design`） |
+| `webapp-testing` | 是 | `anthropics/skills` 仓库（skill 在 `skills/webapp-testing`）——**独立的 skill**，只是恰好发布在同一仓库 |
+| `gsap-core` / `-react` / `-frameworks` / `-scrolltrigger` / `-performance` | 是（agent 按栈选变体） | `greensock/gsap-skills` 仓库 |
+| `performance-optimization` | 可选 | cortexloop 发行；不自动装。缺失时 Stage 4 退化为基于 Playwright 的指标（CLS / LCP / long-tasks）。 |
 
-These are **auto-detected and auto-pulled** on first run by `frontend-playbook/scripts/ensure-prereqs.{ps1,sh}` (see Install below). To install manually: `npx skills add https://github.com/anthropics/skills -g -y` (whole Anthropic collection — includes frontend-design, webapp-testing, docx/pdf/xlsx/pptx) and `npx skills add https://github.com/greensock/gsap-skills -g -y`.
+这些在**首次运行时自动检测 + 自动拉取**，由 `frontend-playbook/scripts/ensure-prereqs.{ps1,sh}` 完成（见下文安装）。手动装：`npx skills add https://github.com/anthropics/skills -g -y`（整个 Anthropic 合集，含 frontend-design、webapp-testing、docx/pdf/xlsx/pptx）和 `npx skills add https://github.com/greensock/gsap-skills -g -y`。
 
-Runtime libraries (the agent installs these per project — no global setup needed): `gsap` and `lenis` via npm; the `@google/design.md` CLI via `npx`.
+运行时库（agent 按项目现装，无需全局配置）：`gsap`、`lenis` 走 npm；`@google/design.md` CLI 走 `npx`。
 
-## Install this toolkit
+## 安装本工具包
 
 ```bash
-# option A — skills CLI (recommended)
-npx skills add https://github.com/whitequeen306/opencode-frontend-toolkit -g -y
+# 方式 A — skills CLI（推荐，自动识别 agent）
+npx skills add https://github.com/whitequeen306/frontend-playbook -g -y
 
-# option B — clone into your opencode skills dir
-git clone https://github.com/whitequeen306/opencode-frontend-toolkit ~/.config/opencode/skills/opencode-frontend-toolkit
+# 方式 B — clone 到你的 agent skill 目录（以 opencode 为例；其他 agent 换成自己的目录）
+git clone https://github.com/whitequeen306/frontend-playbook ~/.config/opencode/skills/frontend-playbook
 ```
 
-**Prerequisites auto-install on first run.** The first time `frontend-playbook` triggers, Stage 0 runs `frontend-playbook/scripts/ensure-prereqs.ps1` (Windows) or `ensure-prereqs.sh` (Unix) — it scans your skill directories and auto-pulls anything missing via `npx skills add`, through opencode's bash permission gate (you stay in control). `performance-optimization` is optional and left to you.
+**前置依赖首次运行自动装。** `frontend-playbook` 首次触发时，Stage 0 会跑 `frontend-playbook/scripts/ensure-prereqs.ps1`（Windows）或 `ensure-prereqs.sh`（Unix）——扫描你的 skill 目录，缺的通过 `npx skills add` 自动拉取，过 agent 的 bash 权限门（你仍可控）。`performance-optimization` 可选，留给你自己。
 
-To run the check manually instead:
+想手动跑检测也行：
 
 ```powershell
 # Windows
-./install.ps1            # thin wrapper -> frontend-playbook/scripts/ensure-prereqs.ps1
+./install.ps1            # 薄封装 -> frontend-playbook/scripts/ensure-prereqs.ps1
 ```
 ```bash
 # Unix
-./install.sh             # thin wrapper -> frontend-playbook/scripts/ensure-prereqs.sh
+./install.sh             # 薄封装 -> frontend-playbook/scripts/ensure-prereqs.sh
 ```
 
-Restart opencode after install — skills are scanned at startup, not hot-reloaded.
+装完**重启 agent**——skill 在启动时扫描，不热重载。
 
-## Usage
+## 用法
 
-Just give a frontend task. The playbook auto-triggers on its description:
+正常说前端需求即可。playbook 靠 description 自动触发：
 
 > 用 React + Tailwind v4 做个 SaaS landing 页。品牌偏深森林绿 + 一抹祖母绿 accent，字体几何感，要有首屏动效和顺滑滚动。
 
-The agent loads `frontend-playbook`, runs Stage 0 (detect stack) → Stage 1 (author DESIGN.md + lint + export) → … → Stage 5 (Playwright verify), and hands you `DESIGN.md` + the built UI + a gate-by-gate report.
+agent 加载 `frontend-playbook`，跑 Stage 0（检测栈）→ Stage 1（写 DESIGN.md + lint + 导出）→ … → Stage 5（Playwright 验证），交给你 `DESIGN.md` + 建好的 UI + 逐 gate 报告。
 
-For single-component tweaks or backend work it stays quiet (`Do NOT use for…` gate). Force it by mentioning `frontend-playbook` in your request.
+单组件小改或纯后端任务时它保持安静（`Do NOT use for…` 门控）。想强制触发，话里带 `frontend-playbook`。
 
-## Example walkthrough: a photography site
+## 完整示例：一个摄影网站
 
-You say:
+你说：
 
 > 帮我设计一个摄影作品集网站。黑底、极简、编辑感，要有首屏动效和顺滑滚动。用 React + Tailwind v4。
 
-The agent loads `frontend-playbook` and runs the pipeline:
+agent 加载 `frontend-playbook`，跑流水线：
 
-**Stage 0 — detect stack.** React + Tailwind v4 in your deps → picks `gsap-react` + Tailwind v4 `css-tailwind` export. Runs `ensure-prereqs` (all present, nothing to install). *(Stage 0.5 skipped — you gave aesthetic direction, no reference URL.)*
+**Stage 0 — 检测栈。** 你的依赖里有 React + Tailwind v4 → 选 `gsap-react` + Tailwind v4 `css-tailwind` 导出。跑 `ensure-prereqs`（都在，不装东西）。*（Stage 0.5 跳过——你给了美学方向、没给参考 URL。）*
 
-**Stage 1 — baseline (`design-md`).** Authors `DESIGN.md` at root:
+**Stage 1 — 定基调（`design-md`）。** 在根目录写 `DESIGN.md`：
 
 ```yaml
 name: Aperture
 colors:
-  ink: "#0A0A0A"        # deep matte black canvas
-  ivory: "#F2EDE4"      # warm ivory body text (≥4.5:1 on ink)
-  safelight: "#B23A2E"  # darkroom-red accent — the only interaction driver
-  grain: "#1A1A1A"      # film-grain overlay base
+  ink: "#0A0A0A"        # 深哑光黑画布
+  ivory: "#F2EDE4"      # 暖象牙白正文（在 ink 上 ≥4.5:1）
+  safelight: "#B23A2E"  # 暗房红 accent——唯一的交互驱动色
+  grain: "#1A1A1A"      # 胶片颗粒叠加层底色
 typography:
   display: { fontFamily: "Bodoni Moda", fontSize: "4rem", fontWeight: 700 }
   body:    { fontFamily: "Inter", fontSize: "1rem" }
-rounded: { tag: 999px }   # sharp editorial corners; pill only for tags
+rounded: { tag: 999px }   # 锐利编辑感圆角；只有 tag 用 pill
 spacing: { sm: 12, md: 24, lg: 48, xl: 96 }
 ```
 
-`designmd lint` → exit 0 (no contrast / broken-ref errors). `export --format css-tailwind` → `theme.css`.
+`designmd lint` → exit 0（无对比度 / broken-ref 错误）。`export --format css-tailwind` → `theme.css`。
 
-**Stage 2 — build UI (`frontend-design`).** Hero = full-bleed photo, ivory headline in Bodoni Moda, safelight-red CTA, film-grain overlay. No ad-hoc hex — every value traced to a token.
+**Stage 2 — 出 UI（`frontend-design`）。** Hero = 全幅照片、象牙白 Bodoni Moda 标题、暗房红 CTA、胶片颗粒叠加。无 ad-hoc hex——每个值都追溯到 token。
 
-**Stage 3 — motion (`gsap-react` + Lenis), thematic.** Stated metaphor: **camera / aperture** (fits photography). Built with gsap:
+**Stage 3 — 动效（`gsap-react` + Lenis），按主题。** 选定的隐喻：**相机 / 光圈**（契合摄影）。用 gsap 实现：
 
-- Hero reveal = **aperture iris opening** — an 8-blade mask scaling open to uncover the first photo (GSAP timeline).
-- Scroll = photos advance **like film through a gate** (scrubbed `yPercent`).
-- Hover = subtle **exposure shift** (brightness tween).
-- Lenis default-on; all wrapped in `gsap.matchMedia` reduced-motion gate; only `transform` / `opacity` animated.
+- 首屏揭示 = **光圈虹膜开合**——8 叶遮罩缩放打开露出第一张照片（GSAP timeline）。
+- 滚动 = 照片像**胶片过卷**一样推进（scrub 的 `yPercent`）。
+- 悬停 = 微妙**曝光偏移**（brightness tween）。
+- Lenis 默认全站开；全部包在 `gsap.matchMedia` reduced-motion 门控里；只动 `transform` / `opacity`。
 
-**Stage 4 — perf.** 0 long tasks on scroll; CLS ≈ 0; images sized + lazy; grain is a CSS overlay (no per-frame JS).
+**Stage 4 — 性能。** 滚动时 0 长任务；CLS ≈ 0；图片有尺寸 + lazy；颗粒是 CSS 叠加层（无逐帧 JS）。
 
-**Stage 5 — verify (`webapp-testing`).** Playwright asserts: computed `background-color` == `#0A0A0A` (ink), headline font == `"Bodoni Moda"`, aperture animation completes, Lenis active, `prefers-reduced-motion: reduce` → shutter skipped + content visible, **zero console errors**.
+**Stage 5 — 验证（`webapp-testing`）。** Playwright 断言：computed `background-color` == `#0A0A0A`（ink）、标题字体 == `"Bodoni Moda"`、光圈动画跑完、Lenis 激活、`prefers-reduced-motion: reduce` → 跳过快门 + 内容可见、**零 console error**。
 
-**You get back:** `DESIGN.md` + `theme.css` + the hero/components + a gate-by-gate report (lint 0 errors, Playwright all green, 60fps, thematic fit: "aperture/film metaphor — fits photography").
+**你拿到：** `DESIGN.md` + `theme.css` + hero/组件 + 逐 gate 报告（lint 0 错误、Playwright 全绿、60fps、主题契合："光圈/胶片隐喻——契合摄影"）。
 
-## Optional: clone a site's look from a URL
+## 可选：从 URL 复刻网站样式
 
-`frontend-playbook` can replicate a reference site's design system. When the user gives a URL (or says "复刻 / 参考 <site>"), Stage 0.5 runs `frontend-playbook/scripts/extract-from-url.mjs` — a Playwright sampler that navigates the URL and dumps computed-style token candidates (colors / fonts / sizes / radii / spacing) as JSON. The agent names + dedupes them, adds rationale, writes a `DESIGN.md`, and lints it in Stage 1.
+`frontend-playbook` 能复刻参考站的设计系统。用户给 URL（或说"复刻 / 参考 <站>"）时，Stage 0.5 跑 `frontend-playbook/scripts/extract-from-url.mjs`——一个 Playwright 采样器，导航到 URL，把 computed style 的 token 候选（色 / 字体 / 字号 / 圆角 / 间距）以 JSON 输出。agent 给候选命名 + 去重、加 rationale、写 `DESIGN.md`，再在 Stage 1 lint。
 
-No extra install — it reuses Playwright (provided by the `webapp-testing` prerequisite). If Playwright is missing, the agent runs `npm i -D playwright && npx playwright install chromium`.
+无需额外安装——复用 Playwright（由 `webapp-testing` 前置提供）。缺 Playwright 时 agent 跑 `npm i -D playwright && npx playwright install chromium`。
 
-**Fidelity:** sampling infers a token system from a few elements — good for "复刻大概感觉", not pixel-perfect brand cloning. For higher fidelity, optionally install a dedicated extractor skill (e.g. `shaom/brand-to-design-md-skill`) — not bundled by default.
+**保真度：** 采样是从几个元素推断 token 系统——适合"复刻大概感觉"，不是像素级品牌克隆。要更高保真可另装专门提取 skill（如 `shaom/brand-to-design-md-skill`）——默认不捆绑。
 
-**Effects (motion) are never cloned** — only static style is. Stage 3 designs motion thematically around the project's subject (cool serves content, not itself — no skiing effect on a photography site), built with gsap.
+**动效永远不复刻**——只有静态样式能复刻。Stage 3 按项目主题设计动效（炫酷服务内容、不为炫而炫——摄影站不会上滑雪特效），用 gsap 做。
 
-## How it was validated
+## 怎么验证的
 
-RED-GREEN tested per the `writing-skills` methodology:
+按 `writing-skills` 的 RED-GREEN 方法测过：
 
-- **RED** (no playbook): agent skipped DESIGN.md and shipped unverified, unrendered code.
-- **GREEN** (with playbook): agent authored + linted DESIGN.md, ran Playwright 21/21, **caught and fixed a real LCP regression** (2516ms → 2296ms) on the first pass. Both gaps closed.
+- **RED**（无 playbook）：agent 跳过 DESIGN.md，盲发未验证、未渲染的代码。
+- **GREEN**（有 playbook）：agent 写 + lint 了 DESIGN.md，跑 Playwright 21/21，**首轮就抓到一个真 LCP bug**（2516ms → 2296ms）并修掉。两个 gap 都堵上。
 
-## Licenses & attribution
+## 许可证与归属
 
-- `frontend-playbook/SKILL.md` — **MIT** (this repo).
-- `design-md/SKILL.md` — **Apache-2.0**; a community skill summarizing Google's DESIGN.md format. The format spec is owned by [`google-labs-code/design.md`](https://github.com/google-labs-code/design.md) (alpha, may change). This skill is **not** affiliated with or endorsed by Google.
-- Prerequisite skills (`frontend-design`, `webapp-testing`, `gsap-*`) retain their own licenses — install them from their official sources above.
+- `frontend-playbook/SKILL.md` — **MIT**（本仓库）。
+- `design-md/SKILL.md` — **Apache-2.0**；Google DESIGN.md 格式的社区 skill。格式规范归 [`google-labs-code/design.md`](https://github.com/google-labs-code/design.md) 所有（alpha，会变）。本 skill **不**附属于 Google、未受其背书。
+- 前置 skill（`frontend-design`、`webapp-testing`、`gsap-*`）保留各自许可——按上面的官方来源装。
 
-## Status
+## 状态
 
-- `design.md` format is `alpha` — re-sync `design-md/SKILL.md` when `@google/design.md` bumps.
-- `frontend-playbook` is `v0.1` (validated once via RED-GREEN). Not exhaustively loophole-closed; expect to iterate.
+- `design.md` 格式是 `alpha`——`@google/design.md` 升级时重新对齐 `design-md/SKILL.md`。
+- `frontend-playbook` 是 `v0.1`（RED-GREEN 验证过一次）。未 exhaustive 地堵完所有漏洞，预期会迭代。
