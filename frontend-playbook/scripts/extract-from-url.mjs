@@ -108,7 +108,7 @@ behaviors.revealCandidates = await page.$$eval('[class*=reveal i], [class*=fade 
 ).catch(() => []);
 
 // 2f. interaction-model guess
-const tabsOrClicks = await page.$$eval('[role=tab], [class*=tab i], [class*=pill i]', els => els.length).catch(() => 0);
+const tabsOrClicks = await page.$$eval('[role=tab], [class*=tab i], [class*=pill i], .slick, .swiper, [data-carousel], [class*=carousel i]', els => els.length).catch(() => 0);
 const vids = await page.$$eval('video', els => ({ count: els.length, autoplay: els.filter(e => e.autoplay).length })).catch(() => ({count:0,autoplay:0}));
 behaviors.interactionModelGuess = {
   scrollDriven: behaviors.scrollTriggered.length > 0 || behaviors.smoothScroll.lenis || behaviors.smoothScroll.locomotive,
