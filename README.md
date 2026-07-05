@@ -74,48 +74,38 @@ agent 加载 `frontend-playbook`，跑 Stage 0（检测栈）→ Stage 1（写 D
 
 单组件小改或纯后端任务时它保持安静（`Do NOT use for…` 门控）。想强制触发，话里带 `frontend-playbook`。
 
-## 完整示例：一个摄影网站
+## 真实构建示例：obscura-studio
 
-你说：
+[obscura-studio](https://github.com/whitequeen306/obscura-studio) 是用本 playbook 全程由 agent 自主规划 + 实现的摄影工作室站——不是虚构演示，是真实跑出来的。下面是真实验证证据。
 
-> 帮我设计一个摄影作品集网站。黑底、极简、编辑感，要有首屏动效和顺滑滚动。用 React + Tailwind v4。
+**Stage 0**：React 19 + Vite + Tailwind v4 + gsap + Lenis + Playwright → 选 `gsap-react`、Tailwind v4 `css-tailwind` 导出。
 
-agent 加载 `frontend-playbook`，跑流水线：
-
-**Stage 0 — 检测栈。** 你的依赖里有 React + Tailwind v4 → 选 `gsap-react` + Tailwind v4 `css-tailwind` 导出。跑 `ensure-prereqs`（都在，不装东西）。*（Stage 0.5 跳过——你给了美学方向、没给参考 URL。）*
-
-**Stage 1 — 定基调（`design-md`）。** 在根目录写 `DESIGN.md`：
+**Stage 1（design-md，真 lint 过）**：根目录 `DESIGN.md` = "OBSCURA" 暗房编辑系统。**实跑 `designmd lint`：0 errors / 0 warnings / 1 info**（不是信 agent 说的，是验过的）。token 节选：
 
 ```yaml
-name: Aperture
+name: OBSCURA Photography Studio
 colors:
-  ink: "#0A0A0A"        # 深哑光黑画布
-  ivory: "#F2EDE4"      # 暖象牙白正文（在 ink 上 ≥4.5:1）
-  safelight: "#B23A2E"  # 暗房红 accent——唯一的交互驱动色
-  grain: "#1A1A1A"      # 胶片颗粒叠加层底色
+  primary: "#d4a24e"     # 放大机灯光，唯一交互驱动色
+  ink: "#0b0b0d"         # 暗房画布
+  bone: "#f4f1ea"        # 暖象牙白正文
+  mist: "#9a9890"
 typography:
-  display: { fontFamily: "Bodoni Moda", fontSize: "4rem", fontWeight: 700 }
-  body:    { fontFamily: "Inter", fontSize: "1rem" }
-rounded: { tag: 999px }   # 锐利编辑感圆角；只有 tag 用 pill
-spacing: { sm: 12, md: 24, lg: 48, xl: 96 }
+  display-xl: { fontFamily: "Cormorant Garamond", fontSize: 112px, fontWeight: 600 }
+  body:       { fontFamily: "Inter", fontSize: 16px }
+rounded: { sm: 2px, md: 4px }   # 建筑感锐角
 ```
 
-`designmd lint` → exit 0（无对比度 / broken-ref 错误）。`export --format css-tailwind` → `theme.css`。
+导出 `theme.css`（Tailwind v4 `@theme`）。
 
-**Stage 2 — 出 UI（`frontend-design`）。** Hero = 全幅照片、象牙白 Bodoni Moda 标题、暗房红 CTA、胶片颗粒叠加。无 ad-hoc hex——每个值都追溯到 token。
+**Stage 2（frontend-design）**：Hero / Nav / Studio / Works / Services / Contact / Footer + `Grain.jsx`（胶片颗粒层）。全用 token，无 ad-hoc hex。
 
-**Stage 3 — 动效（`gsap-react` + Lenis），按主题。** 选定的隐喻：**相机 / 光圈**（契合摄影）。用 gsap 实现：
+**Stage 3（gsap+Lenis，主题化 + signature moment）**：agent 从"主题×动效表"挑了 **Photography → aperture iris open** 做成 signature moment——`Hero.jsx` 里 6 片光圈叶片 SVG + `clipPath: circle(var(--iris)%)` 从 0 开到 130（光圈打开露出照片）。配套：film-advance 滚动、grain 叠加、exposure-shift hover。Lenis 全站 + `gsap.matchMedia` 双分支 + **渐进增强**（默认 `--iris:130` 可见，JS 再藏起来动画——无 JS / reduced-motion 用户直接看到内容）。
 
-- 首屏揭示 = **光圈虹膜开合**——8 叶遮罩缩放打开露出第一张照片（GSAP timeline）。
-- 滚动 = 照片像**胶片过卷**一样推进（scrub 的 `yPercent`）。
-- 悬停 = 微妙**曝光偏移**（brightness tween）。
-- Lenis 默认全站开；全部包在 `gsap.matchMedia` reduced-motion 门控里；只动 `transform` / `opacity`。
+**Stage 4 + 5（真 perf + 真 verify）**：`e2e/perf.py` 测 long tasks / CLS / LCP / FPS；`e2e/verify.py` 断言 computed 样式==token、零 console error、Lenis 默认开 / reduced 关、reduced-motion 下 hero 可见。都在仓库里，可跑。
 
-**Stage 4 — 性能。** 滚动时 0 长任务；CLS ≈ 0；图片有尺寸 + lazy；颗粒是 CSS 叠加层（无逐帧 JS）。
+> 注：obscura-studio 建于 playbook 的"强制 gate 报告"规则**之前**，所以它没有 `e2e/REPORT.md`——正是这次真实构建暴露了"gate 信誉制"的漏洞，才催生了那条规则。以后用 playbook 建的项目会自动产出 REPORT.md。
 
-**Stage 5 — 验证（`webapp-testing`）。** Playwright 断言：computed `background-color` == `#0A0A0A`（ink）、标题字体 == `"Bodoni Moda"`、光圈动画跑完、Lenis 激活、`prefers-reduced-motion: reduce` → 跳过快门 + 内容可见、**零 console error**。
-
-**你拿到：** `DESIGN.md` + `theme.css` + hero/组件 + 逐 gate 报告（lint 0 错误、Playwright 全绿、60fps、主题契合："光圈/胶片隐喻——契合摄影"）。
+完整代码 + DESIGN.md + 验证脚本见 [whitequeen306/obscura-studio](https://github.com/whitequeen306/obscura-studio)。
 
 ## 可选：从 URL 复刻网站样式
 
