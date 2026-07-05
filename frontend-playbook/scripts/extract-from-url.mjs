@@ -12,7 +12,8 @@ if (!url) { console.error('Usage: node extract-from-url.mjs <url>'); process.exi
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
 try {
-  await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
+  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+  await page.waitForTimeout(2500); // let SPA JS render settle before sampling
 } catch (e) {
   console.error('navigation failed:', e.message, '\n(fallback: webfetch the URL + its CSS and parse manually)');
   await browser.close(); process.exit(1);
