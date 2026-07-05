@@ -74,6 +74,49 @@ The agent loads `frontend-playbook`, runs Stage 0 (detect stack) → Stage 1 (au
 
 For single-component tweaks or backend work it stays quiet (`Do NOT use for…` gate). Force it by mentioning `frontend-playbook` in your request.
 
+## Example walkthrough: a photography site
+
+You say:
+
+> 帮我设计一个摄影作品集网站。黑底、极简、编辑感，要有首屏动效和顺滑滚动。用 React + Tailwind v4。
+
+The agent loads `frontend-playbook` and runs the pipeline:
+
+**Stage 0 — detect stack.** React + Tailwind v4 in your deps → picks `gsap-react` + Tailwind v4 `css-tailwind` export. Runs `ensure-prereqs` (all present, nothing to install). *(Stage 0.5 skipped — you gave aesthetic direction, no reference URL.)*
+
+**Stage 1 — baseline (`design-md`).** Authors `DESIGN.md` at root:
+
+```yaml
+name: Aperture
+colors:
+  ink: "#0A0A0A"        # deep matte black canvas
+  ivory: "#F2EDE4"      # warm ivory body text (≥4.5:1 on ink)
+  safelight: "#B23A2E"  # darkroom-red accent — the only interaction driver
+  grain: "#1A1A1A"      # film-grain overlay base
+typography:
+  display: { fontFamily: "Bodoni Moda", fontSize: "4rem", fontWeight: 700 }
+  body:    { fontFamily: "Inter", fontSize: "1rem" }
+rounded: { tag: 999px }   # sharp editorial corners; pill only for tags
+spacing: { sm: 12, md: 24, lg: 48, xl: 96 }
+```
+
+`designmd lint` → exit 0 (no contrast / broken-ref errors). `export --format css-tailwind` → `theme.css`.
+
+**Stage 2 — build UI (`frontend-design`).** Hero = full-bleed photo, ivory headline in Bodoni Moda, safelight-red CTA, film-grain overlay. No ad-hoc hex — every value traced to a token.
+
+**Stage 3 — motion (`gsap-react` + Lenis), thematic.** Stated metaphor: **camera / aperture** (fits photography). Built with gsap:
+
+- Hero reveal = **aperture iris opening** — an 8-blade mask scaling open to uncover the first photo (GSAP timeline).
+- Scroll = photos advance **like film through a gate** (scrubbed `yPercent`).
+- Hover = subtle **exposure shift** (brightness tween).
+- Lenis default-on; all wrapped in `gsap.matchMedia` reduced-motion gate; only `transform` / `opacity` animated.
+
+**Stage 4 — perf.** 0 long tasks on scroll; CLS ≈ 0; images sized + lazy; grain is a CSS overlay (no per-frame JS).
+
+**Stage 5 — verify (`webapp-testing`).** Playwright asserts: computed `background-color` == `#0A0A0A` (ink), headline font == `"Bodoni Moda"`, aperture animation completes, Lenis active, `prefers-reduced-motion: reduce` → shutter skipped + content visible, **zero console errors**.
+
+**You get back:** `DESIGN.md` + `theme.css` + the hero/components + a gate-by-gate report (lint 0 errors, Playwright all green, 60fps, thematic fit: "aperture/film metaphor — fits photography").
+
 ## Optional: clone a site's look from a URL
 
 `frontend-playbook` can replicate a reference site's design system. When the user gives a URL (or says "复刻 / 参考 <site>"), Stage 0.5 runs `frontend-playbook/scripts/extract-from-url.mjs` — a Playwright sampler that navigates the URL and dumps computed-style token candidates (colors / fonts / sizes / radii / spacing) as JSON. The agent names + dedupes them, adds rationale, writes a `DESIGN.md`, and lints it in Stage 1.
