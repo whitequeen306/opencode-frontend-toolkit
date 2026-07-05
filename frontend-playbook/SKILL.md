@@ -82,14 +82,14 @@ Load the gsap variant from Stage 0. Add animation. Lenis is **default-on site-wi
 - **Signature moment (mandatory):** every page designates **one** unforgettable beat — the thing people remember — and builds it with gsap as the centerpiece (e.g. the aperture-open hero, the count-up dashboard, the runway reveal). Generic pages vs award-tier pages usually differ by exactly this one moment. Name it before implementing; if you can't name one, the design is generic — go back.
 - **Lean gsap for the cool stuff:** GSAP for timelines / choreography / scroll-linked / FLIP / SVG morph; CSS-only for simple hovers/transitions. Don't escalate to GSAP where CSS suffices (perf, per **gsap-performance**).
 - Wire Lenis ↔ ScrollTrigger: `lenis.on('scroll', ScrollTrigger.update)`; drive `lenis.raf` from `gsap.ticker` + `ScrollTrigger.update`. (Full detail in **gsap-scrolltrigger**; just ensure this wiring exists.)
-- **Reduced-motion (mandatory):** wrap all motion in `gsap.matchMedia({ '(prefers-reduced-motion: no-preference)': … })`; under reduced-motion, disable Lenis smoothing (`smoothWheel: false` or skip init) and skip non-essential animations. See **gsap-performance**.
+- **Reduced-motion (mandatory):** wrap all motion in `gsap.matchMedia({ '(prefers-reduced-motion: no-preference)': … })`; under reduced-motion, disable Lenis smoothing (`smoothWheel: false` or skip init) and skip non-essential animations. See **gsap-performance**. **Progressive enhancement:** the default (no-JS / reduced-motion) state must be visible — animate FROM hidden → visible, never hide-by-default + reveal-via-JS; users without JS or motion must see content immediately.
 
 **Verify gate:**
 - Thematic fit: every effect has a stated justification tying it to the project's subject; no flashy-but-irrelevant effects shipped.
 - Signature moment: one named, built as the gsap centerpiece (not just "some animations").
 - Animate only `transform` / `opacity` (no layout-thrash props) — gsap-performance rule.
 - 60fps target on hero/landing scroll.
-- Emulate `prefers-reduced-motion: reduce` → Lenis off, animations skipped, no layout shift.
+- Emulate `prefers-reduced-motion: reduce` → Lenis off, animations skipped, no layout shift, content visible (progressive-enhancement check).
 
 ## Stage 4 — Smoothness audit (skill: performance-optimization)
 
@@ -110,6 +110,27 @@ Playwright assertions across the whole flow.
 - `prefers-reduced-motion: reduce` emulation → Lenis off, animations skipped, no layout shift.
 - Zero console errors across the flow.
 - **Clone mode only (Stage 0.5 ran):** side-by-side visual diff — screenshot the built page vs the original URL at desktop 1440 + mobile 390, section by section; flag any visible discrepancy and fix (re-extract if the spec was wrong, fix the component if the build was wrong).
+- **Gate report persisted:** write `e2e/REPORT.md` listing every gate from Stages 1-5 with PASS/FAIL + one-line evidence (command output / screenshot path). No "all gates passed" claim without this file on disk.
+
+## Gate report (mandatory, persisted)
+
+Compliance is auditable, not honor-system. After Stage 5, write `e2e/REPORT.md` with one row per gate across all stages. Template:
+
+```markdown
+# Gate Report — <project>
+
+| Stage | Gate | Result | Evidence |
+|---|---|---|---|
+| 1 | designmd lint exit 0, zero errors | PASS | 0 err / 0 warn / 1 info |
+| 2 | computed styles == tokens | PASS | body bg #0b0b0d, btn #d4a24e |
+| 3 | signature moment named + built | PASS | aperture-iris hero (Hero.jsx) |
+| 3 | reduced-motion path works | PASS | reduced-motion-1440-hero.png |
+| 4 | CLS < 0.1 / LCP < 3500 / fps > 45 | PASS | CLS 0.001 / LCP 2296 / 60fps |
+| 5 | zero console errors | PASS | verify.py 21/21 |
+| 5 | visual diff (clone mode) | N/A | not a clone |
+```
+
+Any FAIL row must be fixed before the build is declared done. This file is the artifact that proves the gates ran — not the agent's say-so.
 
 ## Handoff contract
 
