@@ -66,27 +66,51 @@ Hand frontend-design the `DESIGN.md` path **and** the exported theme. Instruct i
 
 Load the gsap variant from Stage 0. Add animation. Lenis is **default-on site-wide**.
 
-- **Thematic motion (design rule):** every effect must tie to the project's subject — the motion metaphor derives from the domain. Pick from the vocabulary below (or invent a better-fitting one), never impose an off-topic one. Cool serves content, not itself — reject flashy-but-irrelevant effects (no skiing effect on a photography site). State the metaphor you chose and why before implementing.
+> **Depth contract:** every signature moment in Stage 3 must be **deeply implemented** — real GSAP timelines, real supporting CSS, real reduced-motion path. A few `gsap.from(el, {opacity:0})` lines and a CSS `transition: all .3s` hover is a **FAIL** — that is a demo, not a signature moment. The full code templates (8 domains, ~60 lines of GSAP + ~40 lines of CSS each, free plugins only) live in **[`motion-templates.md`](./motion-templates.md)**. Treat them as a **floor, not a ceiling** — adapt the metaphor to the project, don't copy verbatim.
 
-  | Domain | Signature motions (gsap-built) |
-  |---|---|
-  | Photography | aperture iris open, film-advance scroll, grain overlay, exposure-shift hover |
-  | Finance / data | count-up numbers, tick flashes, data cascade, chart draw-on |
-  | Music / audio | waveform, beat-synced pulse, equalizer bars, vinyl spin |
-  | Architecture | blueprint grid reveal, section parallax pin, elevation cross-section |
-  | Fashion / editorial | runway curtain reveal, magazine spread flip, typographic kerning sweep |
-  | Gaming | glitch slice, scanline, particle burst, CRT flicker |
-  | Food / drink | steam particles, slow macro zoom, pour fill |
-  | Outdoor / sport | momentum parallax, trail streaks, elevation gain |
+- **Thematic motion (design rule):** every effect must tie to the project's subject — the motion metaphor derives from the domain. Pick from the vocabulary below (or invent a better-fitting one), never impose an off-topic one. Cool serves content, not itself — reject flashy-but-irrelevant effects (no skiing effect on a photography site). State the metaphor you chose and why before implementing. The matching full code template for each row is in `motion-templates.md`.
 
+  | Domain | Signature motions (gsap-built) | Template section |
+  |---|---|---|
+  | Photography | aperture iris open, film-advance scroll, grain overlay, exposure-shift hover | §1 |
+  | Finance / data | count-up numbers, tick flashes, data cascade, chart draw-on | §2 |
+  | Music / audio | waveform, beat-synced pulse, equalizer bars, vinyl spin | §3 |
+  | Architecture | blueprint grid reveal, section parallax pin, elevation cross-section | §4 |
+  | Fashion / editorial | runway curtain reveal, magazine spread flip, typographic kerning sweep | §5 |
+  | Gaming | glitch slice, scanline, particle burst, CRT flicker | §6 |
+  | Food / drink | steam particles, slow macro zoom, pour fill | §7 |
+  | Outdoor / sport | momentum parallax, trail streaks, elevation gain | §8 |
+
+- **Depth floor (mandatory, anti-laziness):** a Stage-3 signature moment with **<60 lines of GSAP timeline code OR <40 lines of supporting CSS** (custom properties, keyframes, blend modes, selectors, ambient layers) is a **FAIL** — redo it. A single `gsap.from(el, {opacity:0})` entrance, a single CSS `transition: all .3s` hover, fade-up-on-everything, or "placeholder effect" comments without real implementation are all FAILs.
+- **Banned shortcuts** (any one = FAIL): (1) `ease: 'power1'` / `'power2'` as the only easing — must use `CustomEase.create()` with a named curve or a deliberate `cubic-bezier()`. (2) Single-tween entrance where a `gsap.timeline()` is warranted. (3) CSS-only hover where the domain signature warrants a GSAP timeline. (4) Identical motion on >3 elements with no stagger variation = lazy. (5) "Placeholder effect" / "TODO: animate" comments without real implementation. (6) `mix-blend-mode` / `clip-path` / `filter` referenced in JSX but never set in CSS. (7) Using premium plugins (DrawSVG / SplitText / MorphSVG) — use manual stroke-dashoffset / char-split / SVG path interpolation instead, as the templates do.
+- **Required techniques (≥4 must appear in the signature moment):**
+  - [ ] `gsap.timeline()` with ≥2 nested tweens + position parameter (`>` / `<` / absolute time)
+  - [ ] `stagger` with `from: 'center'/'edges'/'random'` or `grid` (not default linear `0,1,2...`)
+  - [ ] `CustomEase.create()` with a named easing curve
+  - [ ] Per-char / per-word reveal via manual char-split (see Photography template) — premium SplitText NOT required
+  - [ ] `clip-path` or `mask` animation driven by a CSS custom property the GSAP tween mutates
+  - [ ] SVG `<path>` `stroke-dashoffset` draw-on (use `getTotalLength()`, not premium DrawSVG)
+  - [ ] `ScrollTrigger` with `pin: true` + `scrub` (not just `toggleActions`)
+  - [ ] `FLIP` for a state transition
+  - [ ] Canvas / WebGL layer (only if the signature warrants it — not default)
+  - [ ] Continuous ambient motion (grain drift, pulse, breathe) via `repeat: -1` + `yoyo: true`
+- **Reference lookup (before writing any signature moment):** name 2-3 reference URLs (Awwwards SOTD / Codrops / CodePen) whose motion you are adapting. State which technique from each is borrowed and how it ties to the project's subject. **No reference = no signature moment** — go back and find one. If no internet access, cite the matching template in `motion-templates.md` plus a written description of the effect you intend (frame-by-frame, t=0 / 500ms / 1500ms).
 - **Signature moment (mandatory):** every page designates **one** unforgettable beat — the thing people remember — and builds it with gsap as the centerpiece (e.g. the aperture-open hero, the count-up dashboard, the runway reveal). Generic pages vs award-tier pages usually differ by exactly this one moment. Name it before implementing; if you can't name one, the design is generic — go back.
-- **Lean gsap for the cool stuff:** GSAP for timelines / choreography / scroll-linked / FLIP / SVG morph; CSS-only for simple hovers/transitions. Don't escalate to GSAP where CSS suffices (perf, per **gsap-performance**).
-- Wire Lenis ↔ ScrollTrigger: `lenis.on('scroll', ScrollTrigger.update)`; drive `lenis.raf` from `gsap.ticker` + `ScrollTrigger.update`. (Full detail in **gsap-scrolltrigger**; just ensure this wiring exists.)
-- **Reduced-motion (mandatory):** wrap all motion in `gsap.matchMedia({ '(prefers-reduced-motion: no-preference)': … })`; under reduced-motion, disable Lenis smoothing (`smoothWheel: false` or skip init) and skip non-essential animations. See **gsap-performance**. **Progressive enhancement:** the default (no-JS / reduced-motion) state must be visible — animate FROM hidden → visible, never hide-by-default + reveal-via-JS; users without JS or motion must see content immediately.
+- **Lean gsap for the cool stuff:** GSAP for timelines / choreography / scroll-linked / FLIP / SVG morph; CSS-only for simple hovers/transitions. Don't escalate to GSAP where CSS suffices (perf, per **gsap-performance**). **However** — when the domain signature warrants a timeline, do not retreat to CSS as an excuse to write shallow code. The depth floor still applies.
+- Wire Lenis ↔ ScrollTrigger: `lenis.on('scroll', ScrollTrigger.update)`; drive `lenis.raf` from `gsap.ticker` + `ScrollTrigger.update`. (Full detail in **gsap-scrolltrigger**; just ensure this wiring exists.) The shared `useLenis` hook in `motion-templates.md` "Common" already wires this correctly and respects reduced-motion.
+- **Reduced-motion (mandatory):** under `prefers-reduced-motion: reduce`, disable Lenis smoothing (the `useLenis` hook returns early) and skip non-essential animations. **Progressive enhancement:** the default (no-JS / reduced-motion) state must be visible — animate FROM hidden → visible, never hide-by-default + reveal-via-JS; users without JS or motion must see content immediately. Every template in `motion-templates.md` ships a `@media (prefers-reduced-motion: reduce)` block that forces final state — mirror this pattern.
+- **Self-critique (mandatory before verify gate):** after writing the signature moment, write `e2e/motion-critique.md` answering:
+  1. "Would this effect appear on Awwwards SOTD? If no, what's missing?" — name the gap concretely.
+  2. "Is the motion in the top 10% of LLM-default output, or indistinguishable from `gsap.from(el, {y: 20})` on everything?" — if the latter, redo.
+  3. "Name 3 details a junior dev would not have added." (e.g. CustomEase curve, ambient grain drift, blend-mode layering, per-char rotation variance, scroll-scrubbed clip-path) — if you can't name 3, you didn't go deep enough.
 
-**Verify gate:**
+**Verify gate (all must pass):**
 - Thematic fit: every effect has a stated justification tying it to the project's subject; no flashy-but-irrelevant effects shipped.
 - Signature moment: one named, built as the gsap centerpiece (not just "some animations").
+- **Depth gate (NEW):** Stage 3 deliverable contains ≥1 `gsap.timeline()` with stagger + ≥1 `CustomEase` + ≥1 advanced CSS technique (`clip-path` / `mask` / `mix-blend-mode` / `filter` / `color-mix`) + ≥4 items from the Required techniques checklist above. A passing signature moment with <60 lines of motion code OR <40 lines of supporting CSS = FAIL, redo.
+- **Render verify (NEW):** screenshot the signature moment at scroll progress 0% / 50% / 100% (or timeline time 0ms / 500ms / 1500ms). Persist as `e2e/signature-frames/0.png`, `500.png`, `1500.png`. Agent must write, for each frame, what should be visible (in `e2e/motion-critique.md`) and confirm the screenshots match. "Animation works" claim without these frames on disk = FAIL.
+- Reference lookup: 2-3 reference URLs cited (or template section + frame-by-frame description if offline).
+- Self-critique: `e2e/motion-critique.md` on disk with all 3 questions answered + 3 junior-dev-missed details named.
 - Animate only `transform` / `opacity` (no layout-thrash props) — gsap-performance rule.
 - 60fps target on hero/landing scroll.
 - Emulate `prefers-reduced-motion: reduce` → Lenis off, animations skipped, no layout shift, content visible (progressive-enhancement check).
